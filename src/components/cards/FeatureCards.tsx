@@ -50,7 +50,10 @@ interface NoteCardProps {
   isVerified?: boolean;
   readingTime?: string;
   className?: string;
-  searchQuery?: string; // New prop for highlighting
+  searchQuery?: string;
+  isOwner?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 // Helper to highlight text
@@ -88,7 +91,10 @@ export function NoteCard({
   isVerified,
   readingTime,
   className,
-  searchQuery
+  searchQuery,
+  isOwner,
+  onEdit,
+  onDelete
 }: NoteCardProps) {
   const navigate = useNavigate();
   const [isFlipped, setIsFlipped] = useState(false);
@@ -96,13 +102,10 @@ export function NoteCard({
   return (
     <div
       className={cn(
-        "relative w-full h-full perspective-1000 group min-h-[220px]", // Minimum height to accommodate flip content
+        "relative w-full h-full perspective-1000 group min-h-[220px]",
         className
       )}
       onClick={(e) => {
-        // If flipped, don't navigate when clicking on the back content (unless specifically clicking a link)
-        // But main card click navigates if not selecting text etc.
-        // For simplicity, we block nav if flipped unless clicking the 'Unlock' button
         if (!isFlipped) navigate(`/notes/${id}`);
       }}
     >
@@ -116,9 +119,31 @@ export function NoteCard({
         {/* Front Face */}
         <div className="absolute inset-0 backface-hidden" style={{ backfaceVisibility: 'hidden' }}>
           <div className="rounded-xl border border-border bg-card p-5 h-full flex flex-col hover-lift hover:border-primary/30 cursor-pointer overflow-hidden relative">
+
+            {/* Owner Actions */}
+            {isOwner && (
+              <div className="absolute top-2 right-2 z-20" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full bg-background/80 hover:bg-background border border-border/50">
+                      <MoreVertical className="w-3.5 h-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={onEdit}>
+                      <Edit className="w-4 h-4 mr-2" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                      <Trash2 className="w-4 h-4 mr-2" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+
             <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            <div className="flex items-start justify-between gap-4 mb-4 relative">
+            <div className="flex items-start justify-between gap-4 mb-4 relative pr-6">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg line-clamp-2 mb-1 group-hover:text-primary transition-colors">
                   <HighlightText text={title} highlight={searchQuery} />
@@ -127,30 +152,16 @@ export function NoteCard({
                   <HighlightText text={subject} highlight={searchQuery} />
                 </p>
               </div>
-              <div className="flex flex-col items-end text-xs text-muted-foreground">
+              <div className="flex flex-col items-end text-xs text-muted-foreground pt-1">
                 <LikeButton count={upvotes} />
                 <span className="mt-1">👁️ {views}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3 relative">
-              <span>by {author}</span>
-              {university && (
-                <>
-                  <span>•</span>
-                  <span>{university}</span>
-                </>
-              )}
-              {country && (
-                <>
-                  <span>•</span>
-                  <span>{country}</span>
-                </>
-              )}
-            </div>
+
 
             {tags && tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 relative">
+              <div className="flex flex-wrap gap-1.5 relative mb-4">
                 {tags.slice(0, 3).map((tag, i) => (
                   <span
                     key={i}
@@ -171,17 +182,17 @@ export function NoteCard({
               </div>
             )}
 
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4 relative">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-1 relative">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-xs font-bold border border-border">
                 {author.charAt(0)}
               </div>
               <div className="flex flex-col">
                 <span className="text-foreground font-medium text-xs leading-none mb-1">{author}</span>
-                <span className="text-[10px] opacity-70 line-clamp-1">{university || "Community Contributor"}</span>
+                <span className="text-[10px] opacity-70 line-clamp-1">{university || country || "Community Contributor"}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-border">
+            <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
               <div className="flex gap-2">
                 <Button
                   variant="ghost"

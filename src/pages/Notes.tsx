@@ -139,9 +139,10 @@ export default function Notes() {
 
   const handleUpdate = async () => {
     if (!editingNote) return;
-    updateNote(editingNote.id, {
-      onSuccess: () => setIsEditOpen(false)
-    });
+    updateNote(
+      { id: editingNote.id, updates: editingNote },
+      { onSuccess: () => setIsEditOpen(false) }
+    );
   };
 
   const handleDelete = () => {
@@ -164,7 +165,7 @@ export default function Notes() {
       const matchesSubject = selectedSubject === "All" || note.subject === selectedSubject;
 
       // Tab Filter (Fix for My Notes)
-      const matchesTab = activeTab === "explore" ? true : (user && note.user_id === user.id);
+      const matchesTab = activeTab === "explore" ? true : (user && note.userId === user.id);
 
       return matchesSearch && matchesSubject && matchesTab;
     })
@@ -512,7 +513,16 @@ export default function Notes() {
                 <NoteCard
                   key={note.id}
                   {...note}
-                  searchQuery={searchQuery} // Pass query for highlighting
+                  searchQuery={searchQuery}
+                  isOwner={user?.id === note.userId}
+                  onEdit={() => {
+                    setEditingNote(note);
+                    setIsEditOpen(true);
+                  }}
+                  onDelete={() => {
+                    setNoteToDelete(note.id);
+                    setIsDeleteOpen(true);
+                  }}
                 />
               ))}
             </div>

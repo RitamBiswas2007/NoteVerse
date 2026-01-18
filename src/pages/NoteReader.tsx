@@ -179,7 +179,9 @@ export default function NoteReader() {
                         views: dbNote.views || 0,
                         tags: dbNote.tags || [],
                         created_at: dbNote.created_at,
-                        files: dbNote.files && Array.isArray(dbNote.files) ? dbNote.files : [],
+                        files: (dbNote.files && Array.isArray(dbNote.files) && dbNote.files.length > 0)
+                            ? dbNote.files
+                            : (dbNote.file_url ? [{ name: `${dbNote.title || 'Document'}.pdf`, url: dbNote.file_url }] : []),
                         description: dbNote.description
                     } as unknown as Note;
                 }

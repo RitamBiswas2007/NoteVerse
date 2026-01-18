@@ -47,11 +47,19 @@ export default function PDFViewer({ url, zoom, pageRefs, onLoadSuccess, onTextEx
         }
     };
 
+    const [error, setError] = useState<Error | null>(null);
+
+    const handleError = (err: Error) => {
+        console.error("PDF Load Error:", err);
+        setError(err);
+        onError(err);
+    }
+
     return (
         <Document
             file={url}
             onLoadSuccess={handleDocumentLoadSuccess}
-            onLoadError={onError}
+            onLoadError={handleError}
             loading={
                 <div className="flex flex-col items-center gap-2 text-zinc-400 mt-20">
                     <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
@@ -61,7 +69,14 @@ export default function PDFViewer({ url, zoom, pageRefs, onLoadSuccess, onTextEx
             error={
                 <div className="flex flex-col items-center gap-4 text-zinc-400 mt-20 bg-zinc-950 p-8 rounded-xl border border-white/5">
                     <span className="text-4xl">⚠️</span>
-                    <span className="text-sm">Cannot render PDF.</span>
+                    <span className="text-lg font-bold">Cannot render PDF</span>
+                    {error && (
+                        <div className="max-w-md p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-200 text-xs font-mono break-all">
+                            {error.message}
+                            {error.name === "MissingPDFException" && <p className="mt-2 text-white">The file is missing or the URL is invalid.</p>}
+                            {error.message?.includes("Setting up fake worker failed") && <p className="mt-2 text-white">Worker configuration error.</p>}
+                        </div>
+                    )}
                 </div>
             }
             className="flex flex-col gap-8"

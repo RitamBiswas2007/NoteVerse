@@ -73,8 +73,9 @@ export default function NoteDetail() {
                     views: dbNote.views || 0,
                     tags: dbNote.tags || [],
                     created_at: dbNote.created_at,
-                    file_url: (dbNote.files && dbNote.files.length > 0) ? dbNote.files[0].url : '#',
-                    files: dbNote.files || []
+                    created_at: dbNote.created_at,
+                    file_url: (dbNote.files && dbNote.files.length > 0) ? dbNote.files[0].url : (dbNote.file_url || '#'),
+                    files: dbNote.files || (dbNote.file_url ? [{ name: 'Document.pdf', url: dbNote.file_url }] : [])
                 } as any;
             }
 
@@ -188,23 +189,56 @@ export default function NoteDetail() {
                     {/* The PDF Frame */}
                     <div className="flex-1 p-6 flex flex-col items-center justify-center overflow-hidden">
                         <div className="w-full h-full max-w-5xl bg-white shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-lg overflow-hidden relative ring-1 ring-white/10 animate-in fade-in zoom-in-95 duration-700 ease-out">
-                            {note.file_url && note.file_url !== '#' ? (
-                                <iframe
-                                    src={`${note.file_url}#toolbar=0&view=FitH`}
-                                    className="w-full h-full border-none"
-                                    title="Note Viewer"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 space-y-4">
-                                    <div className="w-20 h-24 border-4 border-slate-200 rounded flex items-center justify-center text-4xl">
-                                        📄
+                            {(() => {
+                                const url = note.file_url;
+                                const hasFile = url && url !== '#';
+                                const fileName = note.files?.[0]?.name || url || "";
+                                const isPdf = fileName.toLowerCase().endsWith('.pdf') || (url?.toLowerCase().endsWith('.pdf'));
+                                const isOffice = /\.(docx?|xlsx?|pptx?)$/i.test(fileName) || /\.(docx?|xlsx?|pptx?)$/i.test(url || "");
+
+                                if (!hasFile) {
+                                    return (
+                                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 space-y-4">
+                                            <div className="w-20 h-24 border-4 border-slate-200 rounded flex items-center justify-center text-4xl">
+                                                📄
+                                            </div>
+                                            <p className="font-medium text-slate-500">No Document Attached</p>
+                                        </div>
+                                    );
+                                }
+
+                                if (isPdf) {
+                                    return (
+                                        <iframe
+                                            src={`${url}#toolbar=0&view=FitH`}
+                                            className="w-full h-full border-none"
+                                            title="PDF Viewer"
+                                        />
+                                    );
+                                }
+
+                                if (isOffice) {
+                                    return (
+                                        <iframe
+                                            src={`https://docs.google.com/gview?url=${encodeURIComponent(url || "")}&embedded=true`}
+                                            className="w-full h-full border-none"
+                                            title="Office Viewer"
+                                        />
+                                    );
+                                }
+
+                                return (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 text-slate-400 space-y-4">
+                                        <div className="w-20 h-24 border-4 border-slate-200 rounded flex items-center justify-center text-4xl">
+                                            ⬇️
+                                        </div>
+                                        <p className="font-medium text-slate-500">Preview Not Available</p>
+                                        <Button onClick={() => window.open(url, '_blank')}>
+                                            Download File
+                                        </Button>
                                     </div>
-                                    <p className="font-medium text-slate-500">Preview Mode Only</p>
-                                    <p className="text-xs text-slate-400 max-w-xs text-center">
-                                        This is a simulation. In production, the PDF file hosted on Supabase Storage would appear here interactively.
-                                    </p>
-                                </div>
-                            )}
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>
